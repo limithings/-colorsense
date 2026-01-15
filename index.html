@@ -518,38 +518,114 @@
         }
 
         function getColorName(r, g, b) {
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            const brightness = (r + g + b) / 3;
-            const saturation = max - min;
+            // Convertir RGB a HSL para mejor precisión
+            const rNorm = r / 255;
+            const gNorm = g / 255;
+            const bNorm = b / 255;
+            
+            const max = Math.max(rNorm, gNorm, bNorm);
+            const min = Math.min(rNorm, gNorm, bNorm);
+            const delta = max - min;
+            
+            let h = 0, s = 0, l = (max + min) / 2;
+            
+            if (delta !== 0) {
+                s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+                
+                if (max === rNorm) {
+                    h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) * 60;
+                } else if (max === gNorm) {
+                    h = ((bNorm - rNorm) / delta + 2) * 60;
+                } else {
+                    h = ((rNorm - gNorm) / delta + 4) * 60;
+                }
+            }
+            
+            // h = 0-360 (tono), s = 0-1 (saturación), l = 0-1 (luminosidad)
+            const hue = Math.round(h);
+            const sat = Math.round(s * 100);
+            const light = Math.round(l * 100);
             
             let name, cleanName, difficult = false;
             
-            if (brightness < 25) {
+            // Primero: casos especiales (negro, blanco, grises)
+            if (light < 8) {
                 name = '⚫ Negro'; cleanName = 'Negro';
-            } else if (brightness > 230 && saturation < 25) {
+            } else if (light > 95) {
                 name = '⚪ Blanco'; cleanName = 'Blanco';
-            } else if (saturation < 25) {
-                if (brightness < 80) { name = '🩶 Gris oscuro'; cleanName = 'Gris oscuro'; }
-                else if (brightness > 180) { name = '🩶 Gris claro'; cleanName = 'Gris claro'; }
-                else { name = '🩶 Gris'; cleanName = 'Gris'; }
-            } else if (r > g && r > b) {
-                if (g > 150 && b < 100) { name = '🟡 Amarillo'; cleanName = 'Amarillo'; }
-                else if (g > 100 && g < 180 && b < 80) { name = '🟠 Naranja'; cleanName = 'Naranja'; difficult = true; }
-                else if (b > 100 && g < 100) { name = '🩷 Rosa'; cleanName = 'Rosa'; }
-                else if (r > 150 && g < 80 && b < 80) { name = '🔴 Rojo'; cleanName = 'Rojo'; difficult = true; }
-                else if (r < 150 && g < 50 && b < 50) { name = '🟤 Marrón'; cleanName = 'Marrón'; difficult = true; }
+            } else if (sat < 12) {
+                // Grises (baja saturación)
+                if (light < 25) { name = '⚫ Negro'; cleanName = 'Negro'; }
+                else if (light < 45) { name = '🩶 Gris oscuro'; cleanName = 'Gris oscuro'; }
+                else if (light < 70) { name = '🩶 Gris'; cleanName = 'Gris'; }
+                else { name = '🩶 Gris claro'; cleanName = 'Gris claro'; }
+            }
+            // Colores por rango de tono (hue)
+            else if (hue < 10 || hue >= 350) {
+                // Rojos puros
+                if (light < 25) { name = '🟤 Marrón oscuro'; cleanName = 'Marrón oscuro'; difficult = true; }
+                else if (light > 75) { name = '🩷 Rosa'; cleanName = 'Rosa'; }
                 else { name = '🔴 Rojo'; cleanName = 'Rojo'; difficult = true; }
-            } else if (g > r && g > b) {
-                if (r > 150) { name = '🟡 Amarillo'; cleanName = 'Amarillo'; }
-                else if (b > r + 30) { name = '🩵 Cian'; cleanName = 'Cian'; }
+            }
+            else if (hue >= 10 && hue < 25) {
+                // Naranja-rojo
+                if (light < 30) { name = '🟤 Marrón'; cleanName = 'Marrón'; difficult = true; }
+                else if (light > 70) { name = '🍑 Melocotón'; cleanName = 'Melocotón'; }
+                else { name = '🟠 Naranja rojizo'; cleanName = 'Naranja rojizo'; difficult = true; }
+            }
+            else if (hue >= 25 && hue < 45) {
+                // Naranja
+                if (light < 30) { name = '🟤 Marrón'; cleanName = 'Marrón'; difficult = true; }
+                else if (light > 75) { name = '🍑 Melocotón'; cleanName = 'Melocotón'; }
+                else { name = '🟠 Naranja'; cleanName = 'Naranja'; difficult = true; }
+            }
+            else if (hue >= 45 && hue < 65) {
+                // Amarillo
+                if (light < 30) { name = '🫒 Oliva'; cleanName = 'Oliva'; }
+                else { name = '🟡 Amarillo'; cleanName = 'Amarillo'; }
+            }
+            else if (hue >= 65 && hue < 80) {
+                // Amarillo-verde
+                if (light < 35) { name = '🫒 Oliva'; cleanName = 'Oliva'; }
+                else { name = '🟡 Amarillo verdoso'; cleanName = 'Amarillo verdoso'; }
+            }
+            else if (hue >= 80 && hue < 160) {
+                // Verde (rango amplio: 80-160)
+                if (light < 20) { name = '🟢 Verde muy oscuro'; cleanName = 'Verde muy oscuro'; difficult = true; }
+                else if (light < 35) { name = '🟢 Verde oscuro'; cleanName = 'Verde oscuro'; difficult = true; }
+                else if (light > 75) { name = '🟢 Verde claro'; cleanName = 'Verde claro'; difficult = true; }
                 else { name = '🟢 Verde'; cleanName = 'Verde'; difficult = true; }
-            } else if (b > r && b > g) {
-                if (r > 150) { name = '🟣 Violeta'; cleanName = 'Violeta'; }
-                else if (g > 150) { name = '🩵 Cian'; cleanName = 'Cian'; }
+            }
+            else if (hue >= 160 && hue < 190) {
+                // Cian
+                if (light < 30) { name = '🩵 Cian oscuro'; cleanName = 'Cian oscuro'; }
+                else { name = '🩵 Cian'; cleanName = 'Cian'; }
+            }
+            else if (hue >= 190 && hue < 250) {
+                // Azul
+                if (light < 25) { name = '🔵 Azul marino'; cleanName = 'Azul marino'; }
+                else if (light > 70) { name = '🔵 Azul claro'; cleanName = 'Azul claro'; }
                 else { name = '🔵 Azul'; cleanName = 'Azul'; }
-            } else {
-                name = '🎨 Mixto'; cleanName = 'Color mixto';
+            }
+            else if (hue >= 250 && hue < 290) {
+                // Violeta/Púrpura
+                if (light < 25) { name = '🟣 Violeta oscuro'; cleanName = 'Violeta oscuro'; }
+                else if (light > 70) { name = '🟣 Lavanda'; cleanName = 'Lavanda'; }
+                else { name = '🟣 Violeta'; cleanName = 'Violeta'; }
+            }
+            else if (hue >= 290 && hue < 330) {
+                // Magenta/Rosa fuerte
+                if (light < 30) { name = '🟣 Púrpura oscuro'; cleanName = 'Púrpura oscuro'; }
+                else if (light > 70) { name = '🩷 Rosa'; cleanName = 'Rosa'; }
+                else { name = '🩷 Magenta'; cleanName = 'Magenta'; }
+            }
+            else if (hue >= 330 && hue < 350) {
+                // Rosa-rojo
+                if (light > 70) { name = '🩷 Rosa'; cleanName = 'Rosa'; }
+                else { name = '🔴 Rojo rosado'; cleanName = 'Rojo rosado'; difficult = true; }
+            }
+            else {
+                name = '🎨 Color'; cleanName = 'Color';
             }
             
             return { name, cleanName, difficult };
