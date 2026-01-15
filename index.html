@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00D9FF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>ColorSense</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #00D9FF;
+            --accent-glow: rgba(0, 217, 255, 0.4);
+            --warning: #FFB800;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.6);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(145deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), #7B61FF);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        
+        h1 span {
+            background: linear-gradient(90deg, var(--accent), #7B61FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Camera Container */
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--glass-border);
+        }
+        
+        video {
+            width: 100%;
+            display: block;
+            border-radius: 24px;
+        }
+        
+        canvas { display: none; }
+        
+        /* Crosshair - Más pequeño */
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        .crosshair::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4);
+        }
+        
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 50%;
+        }
+        
+        .crosshair.activo::after {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+        }
+        
+        /* Result Card */
+        .result-card {
+            width: 100%;
+            max-width: 380px;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .color-preview {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            border: 3px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .color-info {
+            flex: 1;
+        }
+        
+        .color-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+        
+        .color-values {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            font-weight: 300;
+        }
+        
+        .color-alert {
+            display: none;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 184, 0, 0.15);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: var(--warning);
+        }
+        
+        .color-alert.visible {
+            display: inline-block;
+        }
+        
+        /* Detect Button */
+        .detect-btn {
+            width: 100%;
+            max-width: 380px;
+            margin-top: 20px;
+            padding: 20px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent), #7B61FF);
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+        
+        .detect-btn:active, .detect-btn.activo {
+            transform: scale(0.98);
+            box-shadow: 0 2px 30px var(--accent-glow), inset 0 0 20px rgba(255,255,255,0.2);
+        }
+        
+        .detect-btn:disabled {
+            background: #333;
+            box-shadow: none;
+            color: #666;
+        }
+        
+        .detect-btn-hint {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 300;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        
+        /* Settings */
+        .settings {
+            width: 100%;
+            max-width: 380px;
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        
+        .setting-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .setting-item.active .setting-icon {
+            background: rgba(0, 217, 255, 0.15);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        
+        .setting-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 300;
+        }
+        
+        /* History */
+        .history {
+            width: 100%;
+            max-width: 380px;
+            margin-top: 20px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .history-title {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+        
+        .history-clear {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .history-clear:hover {
+            background: rgba(0, 217, 255, 0.1);
+        }
+        
+        .history-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .history-item {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .history-item:hover {
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+        
+        .history-item::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            border: 1px solid var(--glass-border);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        
+        .history-item:hover::after {
+            opacity: 1;
+        }
+        
+        .history-empty {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🎨</div>
+        <h1>Color<span>Sense</span></h1>
+    </header>
+    
+    <div class="camera-wrapper">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        <div class="crosshair" id="crosshair"></div>
+    </div>
+    
+    <div class="result-card">
+        <div class="color-preview" id="preview"></div>
+        <div class="color-info">
+            <div class="color-name" id="colorName">Listo</div>
+            <div class="color-values" id="colorValues">Mantén el botón para detectar</div>
+            <div class="color-alert" id="colorAlert">⚠️ Difícil para daltónicos</div>
+        </div>
+    </div>
+    
+    <button class="detect-btn" id="detectBtn" disabled>
+        MANTENER PARA DETECTAR
+        <span class="detect-btn-hint">Apunta al color que quieras identificar</span>
+    </button>
+    
+    <div class="settings">
+        <div class="setting-item active" id="settingVoz" onclick="toggleSetting('voz')">
+            <div class="setting-icon">🔊</div>
+            <span class="setting-label">Voz</span>
+        </div>
+        <div class="setting-item active" id="settingVibra" onclick="toggleSetting('vibra')">
+            <div class="setting-icon">📳</div>
+            <span class="setting-label">Vibración</span>
+        </div>
+        <div class="setting-item active" id="settingAlerta" onclick="toggleSetting('alerta')">
+            <div class="setting-icon">⚠️</div>
+            <span class="setting-label">Alertas</span>
+        </div>
+    </div>
+    
+    <div class="history">
+        <div class="history-header">
+            <span class="history-title">Historial</span>
+            <button class="history-clear" id="clearHistory" onclick="clearHistory()">Borrar todo</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <span class="history-empty">Sin colores guardados</span>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const preview = document.getElementById('preview');
+        const colorName = document.getElementById('colorName');
+        const colorValues = document.getElementById('colorValues');
+        const colorAlert = document.getElementById('colorAlert');
+        const crosshair = document.getElementById('crosshair');
+        const detectBtn = document.getElementById('detectBtn');
+        const historyList = document.getElementById('historyList');
+        
+        let settings = { voz: true, vibra: true, alerta: true };
+        let detecting = false;
+        let lastSpokenColor = '';
+        let history = [];
+
+        // Init camera
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        })
+        .then(stream => { 
+            video.srcObject = stream;
+            detectBtn.disabled = false;
+        })
+        .catch(err => { 
+            colorName.textContent = 'Error';
+            colorValues.textContent = err.message;
+        });
+
+        video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        });
+
+        // Button events
+        detectBtn.addEventListener('mousedown', startDetect);
+        detectBtn.addEventListener('mouseup', stopDetect);
+        detectBtn.addEventListener('mouseleave', stopDetect);
+        detectBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startDetect(); });
+        detectBtn.addEventListener('touchend', stopDetect);
+        detectBtn.addEventListener('touchcancel', stopDetect);
+
+        function startDetect() {
+            detecting = true;
+            crosshair.classList.add('activo');
+            detectBtn.classList.add('activo');
+            detect();
+        }
+
+        function stopDetect() {
+            if (!detecting) return;
+            detecting = false;
+            crosshair.classList.remove('activo');
+            detectBtn.classList.remove('activo');
+            
+            const currentColor = preview.style.background;
+            if (currentColor && lastSpokenColor) {
+                saveToHistory(currentColor, lastSpokenColor);
+            }
+        }
+
+        function detect() {
+            if (!detecting) return;
+            
+            ctx.drawImage(video, 0, 0);
+            const x = Math.floor(canvas.width / 2);
+            const y = Math.floor(canvas.height / 2);
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const [r, g, b] = pixel;
+            
+            const hex = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`.toUpperCase();
+            const info = getColorName(r, g, b);
+            
+            preview.style.background = hex;
+            colorName.textContent = info.name;
+            colorValues.textContent = `RGB(${r}, ${g}, ${b}) · ${hex}`;
+            
+            if (settings.alerta && info.difficult) {
+                colorAlert.classList.add('visible');
+            } else {
+                colorAlert.classList.remove('visible');
+            }
+            
+            if (settings.voz && info.name !== lastSpokenColor) {
+                speak(info.cleanName);
+                lastSpokenColor = info.name;
+                
+                if (settings.vibra && navigator.vibrate) {
+                    navigator.vibrate(info.difficult ? [50, 30, 50] : 30);
+                }
+            }
+            
+            requestAnimationFrame(detect);
+        }
+
+        function getColorName(r, g, b) {
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const brightness = (r + g + b) / 3;
+            const saturation = max - min;
+            
+            let name, cleanName, difficult = false;
+            
+            if (brightness < 25) {
+                name = '⚫ Negro'; cleanName = 'Negro';
+            } else if (brightness > 230 && saturation < 25) {
+                name = '⚪ Blanco'; cleanName = 'Blanco';
+            } else if (saturation < 25) {
+                if (brightness < 80) { name = '🩶 Gris oscuro'; cleanName = 'Gris oscuro'; }
+                else if (brightness > 180) { name = '🩶 Gris claro'; cleanName = 'Gris claro'; }
+                else { name = '🩶 Gris'; cleanName = 'Gris'; }
+            } else if (r > g && r > b) {
+                if (g > 150 && b < 100) { name = '🟡 Amarillo'; cleanName = 'Amarillo'; }
+                else if (g > 100 && g < 180 && b < 80) { name = '🟠 Naranja'; cleanName = 'Naranja'; difficult = true; }
+                else if (b > 100 && g < 100) { name = '🩷 Rosa'; cleanName = 'Rosa'; }
+                else if (r > 150 && g < 80 && b < 80) { name = '🔴 Rojo'; cleanName = 'Rojo'; difficult = true; }
+                else if (r < 150 && g < 50 && b < 50) { name = '🟤 Marrón'; cleanName = 'Marrón'; difficult = true; }
+                else { name = '🔴 Rojo'; cleanName = 'Rojo'; difficult = true; }
+            } else if (g > r && g > b) {
+                if (r > 150) { name = '🟡 Amarillo'; cleanName = 'Amarillo'; }
+                else if (b > r + 30) { name = '🩵 Cian'; cleanName = 'Cian'; }
+                else { name = '🟢 Verde'; cleanName = 'Verde'; difficult = true; }
+            } else if (b > r && b > g) {
+                if (r > 150) { name = '🟣 Violeta'; cleanName = 'Violeta'; }
+                else if (g > 150) { name = '🩵 Cian'; cleanName = 'Cian'; }
+                else { name = '🔵 Azul'; cleanName = 'Azul'; }
+            } else {
+                name = '🎨 Mixto'; cleanName = 'Color mixto';
+            }
+            
+            return { name, cleanName, difficult };
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 1.1;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleSetting(key) {
+            settings[key] = !settings[key];
+            document.getElementById('setting' + key.charAt(0).toUpperCase() + key.slice(1))
+                .classList.toggle('active', settings[key]);
+        }
+
+        function saveToHistory(color, name) {
+            if (history.length >= 12) history.shift();
+            if (history.length === 0 || history[history.length - 1].color !== color) {
+                history.push({ color, name });
+                renderHistory();
+            }
+        }
+
+        function clearHistory() {
+            history = [];
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (history.length === 0) {
+                historyList.innerHTML = '<span class="history-empty">Sin colores guardados</span>';
+                return;
+            }
+            historyList.innerHTML = history.map(item => 
+                `<div class="history-item" style="background:${item.color}" data-name="${item.name}" onclick="speak('${item.name.replace(/[^\w\sáéíóúñ]/gi, '')}')"></div>`
+            ).join('');
+        }
+
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('PWA lista'))
+                .catch((err) => console.log('SW error:', err));
+        }
+    </script>
+</body>
+</html>
