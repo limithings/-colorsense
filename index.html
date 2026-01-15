@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#00D9FF">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,43 +24,47 @@
         
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        
         body {
             font-family: 'Outfit', sans-serif;
             background: linear-gradient(145deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
             color: var(--text);
-            min-height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 15px;
+            padding: 10px;
+            padding-top: env(safe-area-inset-top, 10px);
+            padding-bottom: env(safe-area-inset-bottom, 10px);
             user-select: none;
-            overflow-x: hidden;
         }
         
-        /* Header */
+        /* Header compacto */
         .header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            padding-bottom: 8px;
+            flex-shrink: 0;
         }
         
         .logo {
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             background: linear-gradient(135deg, var(--accent), #7B61FF);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 15px var(--accent-glow);
+            font-size: 0.9rem;
         }
         
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            letter-spacing: -0.5px;
         }
         
         h1 span {
@@ -70,34 +74,34 @@
             background-clip: text;
         }
         
-        /* Camera Container */
+        /* Camera - ocupa el espacio disponible */
         .camera-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 380px;
-            border-radius: 24px;
+            flex: 1;
+            min-height: 0;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
         
         video {
             width: 100%;
-            display: block;
-            border-radius: 24px;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
         }
         
         canvas { display: none; }
         
-        /* Crosshair - Más pequeño */
+        /* Crosshair pequeño */
         .crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             pointer-events: none;
-            transition: all 0.3s ease;
         }
         
         .crosshair::before {
@@ -106,11 +110,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: white;
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4);
+            box-shadow: 0 0 8px rgba(255,255,255,0.9);
         }
         
         .crosshair::after {
@@ -119,250 +123,240 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 24px;
-            height: 24px;
-            border: 2px solid rgba(255,255,255,0.6);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.7);
             border-radius: 50%;
         }
         
         .crosshair.activo::after {
             border-color: var(--accent);
-            box-shadow: 0 0 15px var(--accent-glow);
-            animation: pulse 1s infinite;
+            box-shadow: 0 0 12px var(--accent-glow);
         }
         
-        @keyframes pulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+        /* Panel inferior fijo */
+        .bottom-panel {
+            flex-shrink: 0;
+            padding-top: 10px;
         }
         
-        /* Result Card */
+        /* Result compacto */
         .result-card {
-            width: 100%;
-            max-width: 380px;
-            margin-top: 20px;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
+            border-radius: 14px;
+            margin-bottom: 10px;
         }
         
         .color-preview {
-            width: 70px;
-            height: 70px;
-            border-radius: 16px;
-            border: 3px solid rgba(255,255,255,0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
             flex-shrink: 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         
         .color-info {
             flex: 1;
+            min-width: 0;
         }
         
         .color-name {
-            font-size: 1.6rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .color-values {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--text-dim);
-            font-weight: 300;
         }
         
         .color-alert {
             display: none;
-            margin-top: 8px;
-            padding: 6px 12px;
+            font-size: 0.65rem;
+            padding: 3px 8px;
             background: rgba(255, 184, 0, 0.15);
             border: 1px solid var(--warning);
-            border-radius: 8px;
-            font-size: 0.75rem;
+            border-radius: 6px;
             color: var(--warning);
+            margin-top: 4px;
         }
         
         .color-alert.visible {
             display: inline-block;
         }
         
-        /* Detect Button */
+        /* Botón detectar */
         .detect-btn {
             width: 100%;
-            max-width: 380px;
-            margin-top: 20px;
-            padding: 20px;
+            padding: 14px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            letter-spacing: 0.5px;
             border: none;
-            border-radius: 16px;
+            border-radius: 12px;
             background: linear-gradient(135deg, var(--accent), #7B61FF);
             color: #000;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 20px var(--accent-glow);
+            margin-bottom: 10px;
         }
         
         .detect-btn:active, .detect-btn.activo {
             transform: scale(0.98);
-            box-shadow: 0 2px 30px var(--accent-glow), inset 0 0 20px rgba(255,255,255,0.2);
+            box-shadow: 0 0 20px var(--accent-glow);
         }
         
         .detect-btn:disabled {
             background: #333;
-            box-shadow: none;
             color: #666;
         }
         
-        .detect-btn-hint {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 300;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-        
-        /* Settings */
-        .settings {
-            width: 100%;
-            max-width: 380px;
-            margin-top: 20px;
-            padding: 15px 20px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
+        /* Settings en fila compacta */
+        .settings-row {
             display: flex;
-            justify-content: space-around;
+            gap: 8px;
+            justify-content: space-between;
         }
         
-        .setting-item {
+        .setting-btn {
+            flex: 1;
+            padding: 10px 8px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-dim);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            cursor: pointer;
+            gap: 2px;
         }
         
-        .setting-icon {
-            width: 44px;
-            height: 44px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            transition: all 0.2s ease;
-        }
-        
-        .setting-item.active .setting-icon {
+        .setting-btn.active {
             background: rgba(0, 217, 255, 0.15);
             border-color: var(--accent);
-            box-shadow: 0 0 10px var(--accent-glow);
+            color: var(--text);
         }
         
-        .setting-label {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            font-weight: 300;
+        .setting-btn .icon {
+            font-size: 1.1rem;
         }
         
-        /* History */
-        .history {
-            width: 100%;
-            max-width: 380px;
-            margin-top: 20px;
-        }
-        
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        
-        .history-title {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            font-weight: 400;
-        }
-        
-        .history-clear {
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.75rem;
-            color: var(--accent);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .history-clear:hover {
-            background: rgba(0, 217, 255, 0.1);
-        }
-        
-        .history-list {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .history-item {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: 2px solid rgba(255,255,255,0.15);
-            cursor: pointer;
-            transition: all 0.2s ease;
+        /* Historial en el botón de settings */
+        .history-btn {
             position: relative;
         }
         
-        .history-item:hover {
-            transform: scale(1.1);
-            border-color: var(--accent);
+        .history-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--accent);
+            color: #000;
+            font-size: 0.6rem;
+            font-weight: 700;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .history-item::after {
-            content: attr(data-name);
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
+        /* Modal historial */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.visible {
+            display: flex;
+        }
+        
+        .modal-content {
             background: #1a1a2e;
             border: 1px solid var(--glass-border);
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            z-index: 10;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
         }
         
-        .history-item:hover::after {
-            opacity: 1;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+            min-height: 50px;
+        }
+        
+        .history-item {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.15);
+            cursor: pointer;
         }
         
         .history-empty {
-            font-size: 0.8rem;
+            grid-column: 1 / -1;
+            text-align: center;
             color: var(--text-dim);
-            font-style: italic;
+            font-size: 0.85rem;
+            padding: 20px;
+        }
+        
+        .clear-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255,100,100,0.1);
+            border: 1px solid rgba(255,100,100,0.3);
+            border-radius: 10px;
+            color: #ff6b6b;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -378,42 +372,50 @@
         <div class="crosshair" id="crosshair"></div>
     </div>
     
-    <div class="result-card">
-        <div class="color-preview" id="preview"></div>
-        <div class="color-info">
-            <div class="color-name" id="colorName">Listo</div>
-            <div class="color-values" id="colorValues">Mantén el botón para detectar</div>
-            <div class="color-alert" id="colorAlert">⚠️ Difícil para daltónicos</div>
+    <div class="bottom-panel">
+        <div class="result-card">
+            <div class="color-preview" id="preview"></div>
+            <div class="color-info">
+                <div class="color-name" id="colorName">Listo</div>
+                <div class="color-values" id="colorValues">Mantén para detectar</div>
+                <div class="color-alert" id="colorAlert">⚠️ Difícil para daltónicos</div>
+            </div>
+        </div>
+        
+        <button class="detect-btn" id="detectBtn" disabled>MANTENER PARA DETECTAR</button>
+        
+        <div class="settings-row">
+            <button class="setting-btn active" id="settingVoz" onclick="toggleSetting('voz')">
+                <span class="icon">🔊</span>
+                <span>Voz</span>
+            </button>
+            <button class="setting-btn active" id="settingVibra" onclick="toggleSetting('vibra')">
+                <span class="icon">📳</span>
+                <span>Vibración</span>
+            </button>
+            <button class="setting-btn active" id="settingAlerta" onclick="toggleSetting('alerta')">
+                <span class="icon">⚠️</span>
+                <span>Alertas</span>
+            </button>
+            <button class="setting-btn history-btn" onclick="openHistory()">
+                <span class="icon">📋</span>
+                <span>Historial</span>
+                <span class="history-count" id="historyCount">0</span>
+            </button>
         </div>
     </div>
     
-    <button class="detect-btn" id="detectBtn" disabled>
-        MANTENER PARA DETECTAR
-        <span class="detect-btn-hint">Apunta al color que quieras identificar</span>
-    </button>
-    
-    <div class="settings">
-        <div class="setting-item active" id="settingVoz" onclick="toggleSetting('voz')">
-            <div class="setting-icon">🔊</div>
-            <span class="setting-label">Voz</span>
-        </div>
-        <div class="setting-item active" id="settingVibra" onclick="toggleSetting('vibra')">
-            <div class="setting-icon">📳</div>
-            <span class="setting-label">Vibración</span>
-        </div>
-        <div class="setting-item active" id="settingAlerta" onclick="toggleSetting('alerta')">
-            <div class="setting-icon">⚠️</div>
-            <span class="setting-label">Alertas</span>
-        </div>
-    </div>
-    
-    <div class="history">
-        <div class="history-header">
-            <span class="history-title">Historial</span>
-            <button class="history-clear" id="clearHistory" onclick="clearHistory()">Borrar todo</button>
-        </div>
-        <div class="history-list" id="historyList">
-            <span class="history-empty">Sin colores guardados</span>
+    <!-- Modal Historial -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Historial de colores</span>
+                <button class="modal-close" onclick="closeHistory()">×</button>
+            </div>
+            <div class="history-grid" id="historyGrid">
+                <span class="history-empty">Sin colores guardados</span>
+            </div>
+            <button class="clear-btn" onclick="clearHistory()">🗑️ Borrar historial</button>
         </div>
     </div>
 
@@ -427,7 +429,9 @@
         const colorAlert = document.getElementById('colorAlert');
         const crosshair = document.getElementById('crosshair');
         const detectBtn = document.getElementById('detectBtn');
-        const historyList = document.getElementById('historyList');
+        const historyGrid = document.getElementById('historyGrid');
+        const historyCount = document.getElementById('historyCount');
+        const historyModal = document.getElementById('historyModal');
         
         let settings = { voz: true, vibra: true, alerta: true };
         let detecting = false;
@@ -568,27 +572,42 @@
         }
 
         function saveToHistory(color, name) {
-            if (history.length >= 12) history.shift();
+            if (history.length >= 15) history.shift();
             if (history.length === 0 || history[history.length - 1].color !== color) {
                 history.push({ color, name });
-                renderHistory();
+                historyCount.textContent = history.length;
             }
+        }
+
+        function openHistory() {
+            renderHistory();
+            historyModal.classList.add('visible');
+        }
+
+        function closeHistory() {
+            historyModal.classList.remove('visible');
         }
 
         function clearHistory() {
             history = [];
+            historyCount.textContent = '0';
             renderHistory();
         }
 
         function renderHistory() {
             if (history.length === 0) {
-                historyList.innerHTML = '<span class="history-empty">Sin colores guardados</span>';
+                historyGrid.innerHTML = '<span class="history-empty">Sin colores guardados</span>';
                 return;
             }
-            historyList.innerHTML = history.map(item => 
-                `<div class="history-item" style="background:${item.color}" data-name="${item.name}" onclick="speak('${item.name.replace(/[^\w\sáéíóúñ]/gi, '')}')"></div>`
+            historyGrid.innerHTML = history.map(item => 
+                `<div class="history-item" style="background:${item.color}" title="${item.name}" onclick="speak('${item.name.replace(/[^\w\sáéíóúñ]/gi, '')}')"></div>`
             ).join('');
         }
+
+        // Click fuera del modal lo cierra
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) closeHistory();
+        });
 
         // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
